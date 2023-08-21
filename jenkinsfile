@@ -1,0 +1,28 @@
+pipeline {
+    agent any
+ 
+    stages {
+        stage('Checkout') {
+            steps {
+                // Check out the source code from the repository
+                checkout scm
+            }
+        }
+ 
+        stage('Install Dependencies') {
+            steps {
+                // Use NodeJS plugin to set up Node.js environment
+                nodejs(nodeJSInstallationName: 'YOUR_NODEJS_INSTALLATION_NAME') {
+                    sh 'npm install' // Install project dependencies
+                }
+            }
+        }
+ 
+        stage('Deploy to Heroku') {
+            steps {
+                // Start the server on Heroku
+                sh 'node server.js' // Update with your actual startup command
+            }
+        }
+    }
+}
