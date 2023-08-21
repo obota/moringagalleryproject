@@ -50,6 +50,15 @@ pipeline {
                     tokenCredentialId: 'YOUR_SLACK_CREDENTIALS_ID'
                 )
             }
+            emailext (
+                subject: "Test Results - ${currentBuild.fullDisplayName}",
+                body: "${DEFAULT_CONTENT}",
+                recipientProviders: [developers()],
+                replyTo: "dennisobota@gmail.com",
+                attachLog: true,
+                compressLog: true,
+                attachmentsPattern: '**/test-results/*.xml'
+            )
         }
         failure {
             mail (
