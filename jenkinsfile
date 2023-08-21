@@ -1,6 +1,6 @@
 pipeline {
     agent any
- 
+
     stages {
         stage('Checkout') {
             steps {
@@ -8,7 +8,7 @@ pipeline {
                 checkout scm
             }
         }
- 
+
         stage('Install Dependencies') {
             steps {
                 // Use NodeJS plugin to set up Node.js environment
@@ -17,12 +17,43 @@ pipeline {
                 }
             }
         }
- 
+
+        stage('Run Tests') {
+            steps {
+                // Run tests using npm
+                nodejs(nodeJSInstallationName: 'YOUR_NODEJS_INSTALLATION_NAME') {
+                    sh 'npm test'
+                }
+            }
+        }
+
         stage('Deploy to Heroku') {
             steps {
                 // Start the server on Heroku
-                sh 'node server.js' // Update with your actual startup command
+                sh 'node server.js' 
             }
+        }
+    }
+
+    post {
+        always {
+            junit '**/test-results/*.xml'
+            emailext (
+                subject: "Test Results - ${currentBuild.fullDisplayName}",
+                body: "${DEFAULT_CONTENT}",
+                recipientProviders: [developers()],
+                replyTo: "dennisobota@gmail.com",
+                attachLog: true,
+                compressLog: true,
+                attachmentsPattern: '**/test-results/*.xml'
+            )
+        }
+        failure {
+            mail (
+                to: 'dennisobota@gmail.com',
+                subject: "Pipeline Failed - ${currentBuild.fullDisplayName}",
+                body: "The pipeline has failed. Please check the Jenkins console output for details."
+            )
         }
     }
 }
