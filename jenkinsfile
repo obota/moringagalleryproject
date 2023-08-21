@@ -1,28 +1,62 @@
 pipeline {
     agent any
- 
+
+    environment {
+        HEROKU_APP_URL = 'https://obotadennis.herokuapp.com'
+    }
+
     stages {
         stage('Checkout') {
             steps {
-                // Check out the source code from the repository
                 checkout scm
             }
         }
- 
+
         stage('Install Dependencies') {
             steps {
                 // Use NodeJS plugin to set up Node.js environment
-                nodejs(nodeJSInstallationName: 'YOUR_NODEJS_INSTALLATION_NAME') {
-                    sh 'npm install' // Install project dependencies
+                nodejs(nodeJSInstallationName: 'ObotaDennis') {
+                    sh 'npm install'
                 }
             }
         }
- 
+
+        stage('Run Tests') {
+            steps {
+                nodejs(nodeJSInstallationName: 'ObotaDennis') {
+                    sh 'npm test'
+                }
+            }
+        }
+
         stage('Deploy to Heroku') {
             steps {
-                // Start the server on Heroku
-                sh 'node server.js' // Update with your actual startup command
+                sh 'node server.js'
             }
+        }
+    }
+
+    post {
+        always {
+            junit '**/test-results/*.xml'
+        }
+        success {
+            script {
+                def buildId = '87'
+                slackSend(
+                    channel: '#ObotaDennis_IP1', 
+                    color: 'good',
+                    message: "Deployment successful! Build ID: ${buildId}. App URL: ${HEROKU_APP_URL}",
+                    tokenCredentialId: 'YOUR_SLACK_CREDENTIALS_ID'
+                )
+            }
+        }
+        failure {
+            mail (
+                to: 'dennisobota@gmail.com',
+                subject: "Pipeline Failed - ${currentBuild.fullDisplayName}",
+                body: "The pipeline has failed. Please check the Jenkins console output for details."
+            )
         }
     }
 }
